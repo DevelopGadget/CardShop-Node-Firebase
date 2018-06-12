@@ -40,4 +40,42 @@ function CreateUser(req, res) {
   });
 }
 
+//Actualiza Usuario
+function UpdateUser(req, res) {
+  _Client.auth().updateUser(req.params.Id, {
+    email: req.body.Email,
+    emailVerified: false,
+    phoneNumber: req.body.Celular,
+    password: req.body.Password,
+    displayName: req.body.Nombre,
+    disabled: false
+  })
+  .then(function(userRecord) {
+    // See the UserRecord reference doc for the contents of userRecord.
+    res.status(500).send('User Actualizado: '+userRecord.toJSON());
+  })
+  .catch(function(error) {
+    translate(error.errorInfo.message, {to: 'es'}).then(Response => {
+      res.status(400).send(Response.text);
+    }).catch(err => {
+      res.status(400).send(error.errorInfo.message);
+    });
+  });
+}
+
+//Actualiza Usuario
+function DeleteUser(req, res) {
+  _Client.auth().deleteUser(req.params.Id)
+  .then(function(userRecord) {
+    // See the UserRecord reference doc for the contents of userRecord.
+    res.status(500).send('User Eliminado');
+  })
+  .catch(function(error) {
+    translate(error.errorInfo.message, {to: 'es'}).then(Response => {
+      res.status(400).send(Response.text);
+    }).catch(err => {
+      res.status(400).send(error.errorInfo.message);
+    });
+  });
+}
 module.exports = {GetUser, CreateUser}

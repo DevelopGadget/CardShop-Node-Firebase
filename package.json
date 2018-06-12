@@ -2,11 +2,11 @@
   "name": "eCommerce-Node-Firebase",
   "version": "1.0.0",
   "description": "",
-  "main": "/Src/App.js",
+  "main": "Src/App.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node /Src/App.js",
-    "dev": "nodemon /Src/App.js"
+    "start": "node Src/App.js",
+    "dev": "nodemon Src/App.js"
   },
   "keywords": [],
   "author": "",
