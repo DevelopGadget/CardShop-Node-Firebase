@@ -6,7 +6,10 @@ var serviceAccount = require('../example-node-8324d-firebase-adminsdk-1o7n1-f156
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://example-node-8324d.firebaseio.com/'
+  databaseURL: 'https://example-node-8324d.firebaseio.com'
 });
 
-module.exports = admin;
+const Users = admin.database().ref("Users");
+const Data = admin.database().ref("Data");
+
+module.exports = {admin, Data, Users};

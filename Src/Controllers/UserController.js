@@ -1,11 +1,11 @@
 'use strict'
 const _Client = require('../Controllers/Firebase');
 const translate = require('google-translate-api');
-
+const Crypto = require('crypto');
 //Conseguir usuario por Id
 function GetUser(req, res) {
   //if(_Client.auth.)
-  _Client.auth().getUser(req.params.Id)
+  _Client.admin.auth().getUser(req.params.Id)
     .then(function (userRecord) {
       res.status(200).send('User: ' + JSON.stringify({ displayName: userRecord.displayName, phoneNumber: userRecord.phoneNumber, email: userRecord.email}));
     })
@@ -20,7 +20,7 @@ function GetUser(req, res) {
 
 //Crear Usuario nuevo
 function CreateUser(req, res) {
-  _Client.auth().createUser({
+  _Client.admin.auth().createUser({
     email: req.body.Email,
     emailVerified: false,
     phoneNumber: req.body.Celular,
@@ -30,7 +30,8 @@ function CreateUser(req, res) {
   })
     .then(function (userRecord) {
       // See the UserRecord reference doc for the contents of userRecord.
-      res.status(200).send('User Creado: ' + userRecord.uid);
+      _Client.Users.child(userRecord.uid).set({Auth: encrypt(req.body.Password)});
+      res.status(200).send('User Creado: ' + userRecord.uid); 
     })
     .catch(function (error) {
       translate(error.errorInfo.message, { to: 'es' }).then(Response => {
@@ -43,7 +44,7 @@ function CreateUser(req, res) {
 
 //Actualiza Usuario
 function UpdateUser(req, res) {
-  _Client.auth().updateUser(req.params.Id, {
+  _Client.admin.auth().updateUser(req.params.Id, {
     email: req.body.Email,
     emailVerified: false,
     phoneNumber: req.body.Celular,
@@ -53,6 +54,7 @@ function UpdateUser(req, res) {
   })
     .then(function (userRecord) {
       // See the UserRecord reference doc for the contents of userRecord.
+      _Client.Users.child(userRecord.uid).update({Auth: encrypt(req.body.Password)});
       res.status(200).send('User Actualizado: ' + JSON.stringify({ displayName: userRecord.displayName, phoneNumber: userRecord.phoneNumber, email: userRecord.email }));
     })
     .catch(function (error) {
@@ -66,7 +68,7 @@ function UpdateUser(req, res) {
 
 //Actualiza Usuario
 function DeleteUser(req, res) {
-  _Client.auth().deleteUser(req.params.Id)
+  _Client.admin.auth().deleteUser(req.params.Id)
     .then(function (userRecord) {
       // See the UserRecord reference doc for the contents of userRecord.
       res.status(200).send('User Eliminado');
@@ -82,12 +84,11 @@ function DeleteUser(req, res) {
 
 //Login
 function Login(req, res) {
-  _Client.auth().getUserByEmail(req.body.Email)
+  _Client.admin.auth().getUserByEmail(req.body.Email)
     .then(function (userRecord) {
-      if(userRecord.Password == req.body.Password){
-        res.status(200).send("Hola");
-      }
-      res.status(200).send(userRecord.passwordHash+"    "+userRecord.passwordSalt);
+      _Client.Users.child(userRecord.uid).on('value', function(snapshot) {
+        res.status(200).send(snapshot.val());
+      });
     })
     .catch(function (error) {
       translate(error.errorInfo.message, { to: 'es' }).then(Response => {
@@ -100,13 +101,10 @@ function Login(req, res) {
 
 //Salir
 function SignOut(req, res) {
-  firebase.auth().signOut()
-    .catch(function (error) {
-      translate(error.errorInfo.message, { to: 'es' }).then(Response => {
-        res.status(400).send(Response.text);
-      }).catch(err => {
-        res.status(400).send(error.errorInfo.message);
-      });
-    });
+
+}
+
+function encrypt(text){
+  return Crypto.createHmac('sha256', "secret").update(text).digest('base64');
 }
 module.exports = { GetUser, CreateUser, UpdateUser, DeleteUser, Login, SignOut }
