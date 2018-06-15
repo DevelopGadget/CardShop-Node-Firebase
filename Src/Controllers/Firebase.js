@@ -11,5 +11,6 @@ admin.initializeApp({
 
 const Users = admin.database().ref("Users");
 const Data = admin.database().ref("Data");
+const Auth = admin.auth();
 
-module.exports = {admin, Data, Users};
+module.exports = {Auth, Data, Users};

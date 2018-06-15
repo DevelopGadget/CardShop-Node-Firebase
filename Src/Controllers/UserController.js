@@ -4,8 +4,7 @@ const translate = require('google-translate-api');
 const Crypto = require('crypto');
 //Conseguir usuario por Id
 function GetUser(req, res) {
-  //if(_Client.auth.)
-  _Client.admin.auth().getUser(req.params.Id)
+  _Client.Auth.getUser(req.params.Id)
     .then(function (userRecord) {
       res.status(200).send('User: ' + JSON.stringify({ displayName: userRecord.displayName, phoneNumber: userRecord.phoneNumber, email: userRecord.email}));
     })
@@ -20,7 +19,7 @@ function GetUser(req, res) {
 
 //Crear Usuario nuevo
 function CreateUser(req, res) {
-  _Client.admin.auth().createUser({
+  _Client.Auth.createUser({
     email: req.body.Email,
     emailVerified: false,
     phoneNumber: req.body.Celular,
@@ -44,7 +43,7 @@ function CreateUser(req, res) {
 
 //Actualiza Usuario
 function UpdateUser(req, res) {
-  _Client.admin.auth().updateUser(req.params.Id, {
+  _Client.Auth.updateUser(req.params.Id, {
     email: req.body.Email,
     emailVerified: false,
     phoneNumber: req.body.Celular,
@@ -68,9 +67,9 @@ function UpdateUser(req, res) {
 
 //Actualiza Usuario
 function DeleteUser(req, res) {
-  _Client.admin.auth().deleteUser(req.params.Id)
+  _Client.Auth.deleteUser(req.params.Id)
     .then(function (userRecord) {
-      // See the UserRecord reference doc for the contents of userRecord.
+      _Client.Users.child(req.params.Id).remove();
       res.status(200).send('User Eliminado');
     })
     .catch(function (error) {
@@ -84,10 +83,24 @@ function DeleteUser(req, res) {
 
 //Login
 function Login(req, res) {
-  _Client.admin.auth().getUserByEmail(req.body.Email)
+  _Client.Auth.getUserByEmail(req.body.Email)
     .then(function (userRecord) {
       _Client.Users.child(userRecord.uid).on('value', function(snapshot) {
-        res.status(200).send(snapshot.val());
+        if(snapshot.val().Auth === encrypt(req.body.Password)){
+          _Client.Auth.createCustomToken(userRecord.uid, {user: true})
+            .then(function(customToken) {
+              res.status(200).send(customToken);
+            })
+            .catch(function(error) {
+              translate(error.errorInfo.message, { to: 'es' }).then(Response => {
+                res.status(400).send(Response.text);
+              }).catch(err => {
+                res.status(400).send(error.errorInfo.message);
+              });
+            });
+        }else{
+          res.status(200).send("Contraseña Incorrecta");
+        }
       });
     })
     .catch(function (error) {
